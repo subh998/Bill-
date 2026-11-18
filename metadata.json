@@ -1,0 +1,6 @@
+{
+  "name": "SupplyBill",
+  "description": "Mobile Bill of Supply and GST trade invoicing app with instant PDF and PNG export and sharing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,206 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidBusinessProfile(data, userId) {
+      return data.userId == userId &&
+             data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 120 &&
+             data.companyAddress is string && data.companyAddress.size() <= 250 &&
+             data.companyState is string && data.companyState.size() <= 60 &&
+             data.companyPinCode is string && data.companyPinCode.size() <= 12 &&
+             data.companyGstin is string && data.companyGstin.size() <= 20 &&
+             data.cinNo is string && data.cinNo.size() <= 30 &&
+             data.bankName is string && data.bankName.size() <= 100 &&
+             data.bankAccountNumber is string && data.bankAccountNumber.size() <= 40 &&
+             data.bankIfsc is string && data.bankIfsc.size() <= 20 &&
+             data.authorisedSignatory is string && data.authorisedSignatory.size() <= 80 &&
+             data.termsAndConditions is string && data.termsAndConditions.size() <= 400 &&
+             data.defaultQtyUnit is string && data.defaultQtyUnit.size() >= 1 && data.defaultQtyUnit.size() <= 20 &&
+             data.nextInvoiceNumber is int && data.nextInvoiceNumber >= 1 && data.nextInvoiceNumber <= 9999999 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidParty(data, userId) {
+      return data.userId == userId &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.address is string && data.address.size() <= 250 &&
+             data.gstin is string && data.gstin.size() <= 20 &&
+             data.state is string && data.state.size() <= 60 &&
+             data.pinCode is string && data.pinCode.size() <= 12 &&
+             data.phone is string && data.phone.size() <= 20 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidSupplyBill(data, userId) {
+      return data.userId == userId &&
+             data.documentType in ['Bill of Supply', 'Tax Invoice'] &&
+             data.copyType in ['ORIGINAL', 'DUPLICATE', 'TRIPLICATE', 'EXTRA_OC'] &&
+             data.invoiceNumber is string && data.invoiceNumber.size() >= 1 && data.invoiceNumber.size() <= 40 &&
+             data.invoiceDate is string && data.invoiceDate.size() >= 1 && data.invoiceDate.size() <= 30 &&
+             data.reverseCharge in ['N', 'Y'] &&
+             data.placeState is string && data.placeState.size() <= 60 &&
+             data.placePinCode is string && data.placePinCode.size() <= 12 &&
+             data.transportMode is string && data.transportMode.size() <= 50 &&
+             data.vehicleNumber is string && data.vehicleNumber.size() <= 30 &&
+             data.transporterName is string && data.transporterName.size() <= 100 &&
+             data.driverPhone is string && data.driverPhone.size() <= 25 &&
+             data.bhadaAmount is number && data.bhadaAmount >= 0 &&
+             data.truckAdvance is number && data.truckAdvance >= 0 &&
+             data.sellerName is string && data.sellerName.size() >= 1 && data.sellerName.size() <= 120 &&
+             data.sellerAddress is string && data.sellerAddress.size() <= 250 &&
+             data.sellerState is string && data.sellerState.size() <= 60 &&
+             data.sellerPinCode is string && data.sellerPinCode.size() <= 12 &&
+             data.sellerGstin is string && data.sellerGstin.size() <= 20 &&
+             data.sellerCinNo is string && data.sellerCinNo.size() <= 30 &&
+             data.bankName is string && data.bankName.size() <= 100 &&
+             data.bankAccountNumber is string && data.bankAccountNumber.size() <= 40 &&
+             data.bankIfsc is string && data.bankIfsc.size() <= 20 &&
+             data.authorisedSignatory is string && data.authorisedSignatory.size() <= 80 &&
+             data.termsAndConditions is string && data.termsAndConditions.size() <= 400 &&
+             data.receiverName is string && data.receiverName.size() >= 1 && data.receiverName.size() <= 120 &&
+             data.receiverAddress is string && data.receiverAddress.size() <= 250 &&
+             data.receiverPoNo is string && data.receiverPoNo.size() <= 50 &&
+             data.receiverGstin is string && data.receiverGstin.size() <= 20 &&
+             data.receiverState is string && data.receiverState.size() <= 60 &&
+             data.receiverPinCode is string && data.receiverPinCode.size() <= 12 &&
+             data.consigneeName is string && data.consigneeName.size() <= 120 &&
+             data.consigneeAddress is string && data.consigneeAddress.size() <= 250 &&
+             data.consigneeGstin is string && data.consigneeGstin.size() <= 20 &&
+             data.consigneeState is string && data.consigneeState.size() <= 60 &&
+             data.consigneePinCode is string && data.consigneePinCode.size() <= 12 &&
+             data.qtyUnitLabel is string && data.qtyUnitLabel.size() <= 20 &&
+             data.items is list && data.items.size() >= 1 && data.items.size() <= 25 && data.items[0] is map &&
+             data.totalBeforeTax is number && data.totalBeforeTax >= 0 &&
+             data.cgstRate is number && data.cgstRate >= 0 && data.cgstRate <= 100 &&
+             data.sgstRate is number && data.sgstRate >= 0 && data.sgstRate <= 100 &&
+             data.igstRate is number && data.igstRate >= 0 && data.igstRate <= 100 &&
+             data.totalTaxAmount is number && data.totalTaxAmount >= 0 &&
+             data.totalAfterTax is number && data.totalAfterTax >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      match /profile/{docId} {
+        allow list: if isOwner(userId);
+        allow get, delete: if isOwner(userId) && isValidId(docId) && docId == 'business';
+
+        allow create: if isOwner(userId) &&
+                         docId == 'business' &&
+                         request.resource.data.keys().hasAll([
+                           'userId', 'companyName', 'companyAddress', 'companyState', 'companyPinCode',
+                           'companyGstin', 'cinNo', 'bankName', 'bankAccountNumber', 'bankIfsc',
+                           'authorisedSignatory', 'termsAndConditions', 'defaultQtyUnit',
+                           'nextInvoiceNumber', 'createdAt', 'updatedAt'
+                         ]) &&
+                         request.resource.data.keys().hasOnly([
+                           'userId', 'companyName', 'companyAddress', 'companyState', 'companyPinCode',
+                           'companyGstin', 'cinNo', 'bankName', 'bankAccountNumber', 'bankIfsc',
+                           'authorisedSignatory', 'termsAndConditions', 'defaultQtyUnit',
+                           'nextInvoiceNumber', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidBusinessProfile(request.resource.data, userId);
+
+        allow update: if isOwner(userId) &&
+                         docId == 'business' &&
+                         isValidBusinessProfile(request.resource.data, userId) &&
+                         request.resource.data.userId == resource.data.userId &&
+                         request.resource.data.createdAt == resource.data.createdAt && (
+                           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                             'companyName', 'companyAddress', 'companyState', 'companyPinCode',
+                             'companyGstin', 'cinNo', 'bankName', 'bankAccountNumber', 'bankIfsc',
+                             'authorisedSignatory', 'termsAndConditions', 'defaultQtyUnit',
+                             'nextInvoiceNumber', 'updatedAt'
+                           ]) ||
+                           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                             'nextInvoiceNumber', 'updatedAt'
+                           ])
+                         );
+      }
+
+      match /parties/{partyId} {
+        allow list: if isOwner(userId);
+        allow get, delete: if isOwner(userId) && isValidId(partyId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(partyId) &&
+                         request.resource.data.keys().hasAll([
+                           'userId', 'name', 'address', 'gstin', 'state', 'pinCode', 'phone',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         request.resource.data.keys().hasOnly([
+                           'userId', 'name', 'address', 'gstin', 'state', 'pinCode', 'phone',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidParty(request.resource.data, userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(partyId) &&
+                         isValidParty(request.resource.data, userId) &&
+                         request.resource.data.userId == resource.data.userId &&
+                         request.resource.data.createdAt == resource.data.createdAt &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                           'name', 'address', 'gstin', 'state', 'pinCode', 'phone', 'updatedAt'
+                         ]);
+      }
+
+      match /bills/{billId} {
+        allow list: if isOwner(userId);
+        allow get, delete: if isOwner(userId) && isValidId(billId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(billId) &&
+                         request.resource.data.keys().hasOnly([
+                           'userId', 'documentType', 'copyType', 'invoiceNumber', 'invoiceDate',
+                           'reverseCharge', 'placeState', 'placePinCode', 'transportMode',
+                           'vehicleNumber', 'transporterName', 'driverPhone', 'bhadaAmount',
+                           'truckAdvance', 'sellerName', 'sellerAddress', 'sellerState',
+                           'sellerPinCode', 'sellerGstin', 'sellerCinNo', 'bankName',
+                           'bankAccountNumber', 'bankIfsc', 'authorisedSignatory',
+                           'termsAndConditions', 'receiverName', 'receiverAddress',
+                           'receiverPoNo', 'receiverGstin', 'receiverState', 'receiverPinCode',
+                           'consigneeName', 'consigneeAddress', 'consigneeGstin',
+                           'consigneeState', 'consigneePinCode', 'qtyUnitLabel', 'items',
+                           'totalBeforeTax', 'cgstRate', 'sgstRate', 'igstRate',
+                           'totalTaxAmount', 'totalAfterTax', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidSupplyBill(request.resource.data, userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(billId) &&
+                         isValidSupplyBill(request.resource.data, userId) &&
+                         request.resource.data.userId == resource.data.userId &&
+                         request.resource.data.createdAt == resource.data.createdAt &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                           'documentType', 'copyType', 'invoiceNumber', 'invoiceDate',
+                           'reverseCharge', 'placeState', 'placePinCode', 'transportMode',
+                           'vehicleNumber', 'transporterName', 'driverPhone', 'bhadaAmount',
+                           'truckAdvance', 'sellerName', 'sellerAddress', 'sellerState',
+                           'sellerPinCode', 'sellerGstin', 'sellerCinNo', 'bankName',
+                           'bankAccountNumber', 'bankIfsc', 'authorisedSignatory',
+                           'termsAndConditions', 'receiverName', 'receiverAddress',
+                           'receiverPoNo', 'receiverGstin', 'receiverState', 'receiverPinCode',
+                           'consigneeName', 'consigneeAddress', 'consigneeGstin',
+                           'consigneeState', 'consigneePinCode', 'qtyUnitLabel', 'items',
+                           'totalBeforeTax', 'cgstRate', 'sgstRate', 'igstRate',
+                           'totalTaxAmount', 'totalAfterTax', 'updatedAt'
+                         ]);
+      }
+    }
+  }
+}
